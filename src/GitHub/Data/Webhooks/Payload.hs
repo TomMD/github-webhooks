@@ -465,6 +465,7 @@ data HookPullRequest = HookPullRequest
     , whPullReqAdditionsCount   :: !(Maybe Int)               -- ^ Not sent with all events.
     , whPullReqDeletionsCount   :: !(Maybe Int)               -- ^ Not sent with all events.
     , whPullReqFileChangeCount  :: !(Maybe Int)               -- ^ Not sent with all events.
+    , whPullReqInstallationId   :: !(Maybe Integer)           -- ^ Only sent for github apps (vs oauth apps)
     }
     deriving (Eq, Show, Typeable, Data, Generic)
 
@@ -919,6 +920,10 @@ instance FromJSON HookPullRequest where
       <*> o .:? "additions"
       <*> o .:? "deletions"
       <*> o .:? "changed_files"
+      <*> do mp <- o .:? "installation"
+             case mp of
+               Nothing -> pure Nothing
+               Just x  -> x .:? "id"
 
 instance FromJSON HookPullRequestReview where
   parseJSON = withObject "HookPullRequestReview" $ \o -> HookPullRequestReview
