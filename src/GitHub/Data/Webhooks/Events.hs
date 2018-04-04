@@ -2,6 +2,7 @@
 module GitHub.Data.Webhooks.Events
     ( EventHasSender(..)
     , EventHasRepo(..)
+    , EventHasInstallationId(..)
       --
     , CommitCommentEvent(..)
     , CommitCommentEventAction(..)
@@ -113,6 +114,10 @@ class EventHasSender eventKind where
 class EventHasRepo eventKind where
     -- | Provides the repository context of a Webhook event.
     repoForEvent :: eventKind -> HookRepository
+
+class EventHasInstallationId eventKind where
+    -- | Provides ID of GitHub app instance associated with the event
+    appIdForEvent :: eventKind -> Maybe Int
 
 
 data CommitCommentEventAction
@@ -411,15 +416,18 @@ instance FromJSON IssuesEventAction where
 --  unlabeled, opened, edited, milestoned, demilestoned, closed, or reopened.
 -- See <https://developer.github.com/v3/activity/events/types/#issuesevent>.
 data IssuesEvent = IssuesEvent
-    { evIssuesEventAction       :: !IssuesEventAction
-    , evIssuesEventIssue        :: !HookIssue
-    , evIssuesEventRepo         :: !HookRepository
-    , evIssuesEventSender       :: !HookUser
+    { evIssuesEventAction         :: !IssuesEventAction
+    , evIssuesEventIssue          :: !HookIssue
+    , evIssuesEventRepo           :: !HookRepository
+    , evIssuesEventSender         :: !HookUser
+    -- | Installation ID is present if webhook was registered by a Github app
+    , evIssuesEventInstallationId :: !(Maybe Int)
     }
     deriving (Eq, Show, Typeable, Data, Generic)
 
 instance EventHasSender IssuesEvent where senderOfEvent = evIssuesEventSender
 instance EventHasRepo IssuesEvent where repoForEvent = evIssuesEventRepo
+instance EventHasInstallationId IssuesEvent where appIdForEvent = evIssuesEventInstallationId
 instance NFData IssuesEvent where rnf = genericRnf
 
 
@@ -859,6 +867,8 @@ data PullRequestEvent = PullRequestEvent
 
 instance EventHasSender PullRequestEvent where senderOfEvent = evPullReqSender
 instance EventHasRepo PullRequestEvent where repoForEvent = evPullReqRepo
+instance EventHasInstallationId PullRequestEvent where
+    appIdForEvent = Just . evPullReqInstallationId
 instance NFData PullRequestEvent where rnf = genericRnf
 
 
@@ -1259,6 +1269,7 @@ instance FromJSON IssuesEvent where
         <*> o .: "issue"
         <*> o .: "repository"
         <*> o .: "sender"
+        <*> (o .:? "installation" >>= maybe (return Nothing) (\i -> Just <$> i .: "id"))
 
 instance FromJSON LabelEvent where
     parseJSON = withObject "LabelEvent" $ \o -> LabelEvent

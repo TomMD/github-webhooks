@@ -1541,6 +1541,7 @@ issuesEventFixture = IssuesEvent
           , whUserType = OwnerUser
           , whUserIsAdminOfSite = False
           }
+    , evIssuesEventInstallationId = Nothing
     }
 
 labelEventFixture :: LabelEvent
