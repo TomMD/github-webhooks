@@ -117,7 +117,7 @@ class EventHasRepo eventKind where
 
 class EventHasInstallationId eventKind where
     -- | Provides ID of GitHub app instance associated with the event
-    appIdForEvent :: eventKind -> Maybe Int
+    installationIdForEvent :: eventKind -> Maybe Int
 
 
 data CommitCommentEventAction
@@ -427,7 +427,8 @@ data IssuesEvent = IssuesEvent
 
 instance EventHasSender IssuesEvent where senderOfEvent = evIssuesEventSender
 instance EventHasRepo IssuesEvent where repoForEvent = evIssuesEventRepo
-instance EventHasInstallationId IssuesEvent where appIdForEvent = evIssuesEventInstallationId
+instance EventHasInstallationId IssuesEvent where
+    installationIdForEvent = evIssuesEventInstallationId
 instance NFData IssuesEvent where rnf = genericRnf
 
 
@@ -868,7 +869,7 @@ data PullRequestEvent = PullRequestEvent
 instance EventHasSender PullRequestEvent where senderOfEvent = evPullReqSender
 instance EventHasRepo PullRequestEvent where repoForEvent = evPullReqRepo
 instance EventHasInstallationId PullRequestEvent where
-    appIdForEvent = Just . evPullReqInstallationId
+    installationIdForEvent = Just . evPullReqInstallationId
 instance NFData PullRequestEvent where rnf = genericRnf
 
 
