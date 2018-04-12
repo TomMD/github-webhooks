@@ -25,6 +25,7 @@ module GitHub.Data.Webhooks.Payload
     , HookRelease(..)
     , HookPullRequest(..)
     , HookPullRequestReview(..)
+    , HookTree(..)
     , HookInstallation(..)
     , HookDeployment(..)
     , HookDeploymentStatus(..)
@@ -426,8 +427,6 @@ data HookRelease = HookRelease
 instance NFData HookRelease where rnf = genericRnf
 
 
--- FIXME: Property "head" missing (not sure)
--- FIXME: Property "base" missing (not sure)
 data HookPullRequest = HookPullRequest
     { whPullReqUrl              :: !URL
     , whPullReqId               :: !Int
@@ -453,6 +452,8 @@ data HookPullRequest = HookPullRequest
     , whPullReqRevCommentUrl    :: !URL
     , whPullReqCommentsUrl      :: !URL
     , whPullReqStatusesUrl      :: !URL
+    , whPullReqBase             :: !HookTree
+    , whPullReqHead             :: !HookTree
     -- , whPullReqIsMerged         :: !Bool
     -- , whPullReqIsMergeable      :: !Bool
     -- , whPullReqMergeableState   :: !Text
@@ -481,6 +482,21 @@ data HookPullRequestReview = HookPullRequestReview
     deriving (Eq, Show, Typeable, Data, Generic)
 
 instance NFData HookPullRequestReview where rnf = genericRnf
+
+
+-- | Information about a specific ref and commit in a specific repository.
+-- A pull request has a base tree (the reference branch for a merge) and a head
+-- (the changes to be merged).
+data HookTree = HookTree
+    { whTreeLabel :: !Text
+    , whTreeRef   :: !Text
+    , whTreeSha   :: !Text
+    , whTreeUser  :: !HookUser
+    , whTreeRepo  :: !HookRepository
+    }
+    deriving (Eq, Show, Typeable, Data, Generic)
+
+instance NFData HookTree where rnf = genericRnf
 
 
 data HookInstallation = HookInstallation
@@ -907,6 +923,8 @@ instance FromJSON HookPullRequest where
       <*> o .: "review_comment_url"
       <*> o .: "comments_url"
       <*> o .: "statuses_url"
+      <*> o .: "base"
+      <*> o .: "head"
       -- <*> o .: "merged"
       -- <*> o .: "mergeable"
       -- <*> o .: "mergeable_state"
@@ -927,6 +945,14 @@ instance FromJSON HookPullRequestReview where
       <*> o .: "state"
       <*> o .: "html_url"
       <*> o .: "pull_request_url"
+
+instance FromJSON HookTree where
+  parseJSON = withObject "HookTree" $ \o -> HookTree
+      <$> o .: "label"
+      <*> o .: "ref"
+      <*> o .: "sha"
+      <*> o .: "user"
+      <*> o .: "repo"
 
 instance FromJSON HookInstallation where
   parseJSON = withObject "HookInstallation" $ \o -> HookInstallation
